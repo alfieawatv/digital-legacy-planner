@@ -254,6 +254,25 @@ textarea { min-height: 100px; resize: vertical; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* Config warning */
+.config-warning {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 300; padding: 1rem;
+}
+.config-warning-inner {
+  background: white; border-radius: 12px; padding: 2rem;
+  max-width: 480px; width: 100%; box-shadow: var(--shadow);
+}
+.config-warning-inner h3 { margin-bottom: 0.75rem; }
+.config-warning-inner p { color: var(--text-muted); margin-bottom: 1rem; }
+.config-warning-inner ol { margin: 0 0 1.5rem 1.25rem; color: var(--text-muted); }
+.config-warning-inner li { margin-bottom: 0.4rem; }
+.config-warning-inner code {
+  background: #f0eeea; padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.9rem;
+}
+.config-warning-inner a { color: var(--primary); }
+
 @media (max-width: 768px) {
   .hero { grid-template-columns: 1fr; padding: 2.5rem 1.25rem; }
   .hero h1 { font-size: 2.1rem; }
