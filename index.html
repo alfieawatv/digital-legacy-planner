@@ -3,81 +3,62 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Digital Legacy Planner — Simple continuity for your digital life</title>
-  <meta name="description" content="Organize what happens to your digital accounts, photos, messages, and online presence. Clear, calm, and free of legal jargon." />
+  <title>Digital Legacy Planner — Your digital continuity plan</title>
+  <meta name="description" content="Organize what happens to your digital accounts, photos, messages, and online presence. Secure accounts required." />
   <link rel="stylesheet" href="styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <!-- Landing / Hero (shown when no profile) -->
-  <div id="landing" class="page">
-    <header class="topbar">
-      <div class="logo">Digital Legacy</div>
-      <button id="start-btn" class="btn primary">Get Started — Free</button>
-    </header>
+  <!-- ==================== AUTH SCREENS ==================== -->
+  <div id="auth-screen" class="page">
+    <div class="auth-container">
+      <div class="auth-card">
+        <div class="logo-large">Digital Legacy</div>
+        <p class="auth-tagline">Plan what happens to your digital life</p>
 
-    <section class="hero">
-      <div class="hero-content">
-        <h1>Your digital life deserves a plan.</h1>
-        <p class="lead">Accounts, photos, messages, subscriptions, and online presence — most people leave them unplanned. This tool helps you organize everything clearly and calmly, without legal jargon.</p>
-        <div class="hero-actions">
-          <button class="btn primary large" id="start-btn-2">Start your plan</button>
-          <a href="#how" class="btn ghost large">How it works</a>
+        <!-- Login Form -->
+        <div id="login-form" class="auth-form">
+          <h2>Log in</h2>
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" placeholder="you@example.com" autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" placeholder="Your password" autocomplete="current-password" />
+          </div>
+          <button id="login-btn" class="btn primary full">Log in</button>
+          <p class="auth-switch">Don't have an account? <a href="#" id="show-signup">Sign up</a></p>
+          <p id="login-error" class="error-msg"></p>
+        </div>
+
+        <!-- Signup Form -->
+        <div id="signup-form" class="auth-form hidden">
+          <h2>Create account</h2>
+          <div class="form-group">
+            <label for="signup-name">Display name</label>
+            <input type="text" id="signup-name" placeholder="How should we address you?" />
+          </div>
+          <div class="form-group">
+            <label for="signup-email">Email</label>
+            <input type="email" id="signup-email" placeholder="you@example.com" autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <label for="signup-password">Password</label>
+            <input type="password" id="signup-password" placeholder="At least 6 characters" autocomplete="new-password" />
+          </div>
+          <button id="signup-btn" class="btn primary full">Create account</button>
+          <p class="auth-switch">Already have an account? <a href="#" id="show-login">Log in</a></p>
+          <p id="signup-error" class="error-msg"></p>
         </div>
       </div>
-      <div class="hero-visual">
-        <div class="card preview-card">
-          <div class="preview-header">Your Digital Continuity</div>
-          <ul class="preview-list">
-            <li>✓ 12 accounts listed</li>
-            <li>✓ 2 trusted contacts</li>
-            <li>✓ Wishes written</li>
-            <li>✓ Next check-in: in 30 days</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <section id="how" class="features">
-      <h2>Simple steps that actually get done</h2>
-      <div class="feature-grid">
-        <div class="feature">
-          <div class="feature-icon">1</div>
-          <h3>Inventory</h3>
-          <p>List the accounts, subscriptions, photo libraries, and important digital items that matter to you.</p>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">2</div>
-          <h3>Trusted people</h3>
-          <p>Choose who should be notified and given clear instructions if something happens.</p>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">3</div>
-          <h3>Your wishes</h3>
-          <p>Write plain-language instructions for what you want to happen to each part of your digital life.</p>
-        </div>
-        <div class="feature">
-          <div class="feature-icon">4</div>
-          <h3>Gentle check-ins</h3>
-          <p>Periodic quiet reminders so the system knows you're still active. You stay in control.</p>
-        </div>
-      </div>
-    </section>
-
-    <section class="trust">
-      <h2>Built for ordinary people</h2>
-      <p>No complex legal forms. No pressure. Just a clear place to put the things that matter so the people you love aren't left guessing.</p>
-      <p class="disclaimer">This is a prototype for demonstration purposes. It is not a substitute for professional legal or estate planning advice.</p>
-    </section>
-
-    <footer class="footer">
-      <p>Digital Legacy Planner — Prototype</p>
-    </footer>
+      <p class="auth-footer">Your data is stored securely under your account.</p>
+    </div>
   </div>
 
-  <!-- App Shell -->
+  <!-- ==================== MAIN APP ==================== -->
   <div id="app" class="page hidden">
     <header class="app-header">
       <div class="logo">Digital Legacy</div>
@@ -88,7 +69,10 @@
         <button data-view="wishes" class="nav-btn">Wishes</button>
         <button data-view="settings" class="nav-btn">Settings</button>
       </nav>
-      <button id="logout-btn" class="btn ghost small">Reset demo</button>
+      <div class="user-menu">
+        <span id="user-greeting" class="user-greeting"></span>
+        <button id="logout-btn" class="btn ghost small">Log out</button>
+      </div>
     </header>
 
     <main class="app-main">
@@ -112,7 +96,7 @@
 
         <div class="card">
           <h2>Next check-in</h2>
-          <p id="checkin-status">You haven't set a check-in schedule yet.</p>
+          <p id="checkin-status">Loading...</p>
           <button id="do-checkin" class="btn primary">I'm still here — check in now</button>
         </div>
 
@@ -176,16 +160,22 @@
           <input type="text" id="profile-name" placeholder="How should we address you?" />
           <button id="save-profile" class="btn" style="margin-top:0.75rem">Update name</button>
         </div>
-        <div class="card danger-zone">
-          <h2>Reset demo data</h2>
-          <p>This clears everything stored in this browser.</p>
-          <button id="reset-all" class="btn danger">Clear all data</button>
+        <div class="card">
+          <h2>Account</h2>
+          <p id="account-email" class="muted"></p>
+          <button id="logout-btn-2" class="btn">Log out</button>
         </div>
       </section>
     </main>
   </div>
 
-  <!-- Modals -->
+  <!-- Loading overlay -->
+  <div id="loading" class="loading hidden">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <!-- Modal -->
   <div id="modal" class="modal hidden">
     <div class="modal-content">
       <button class="modal-close" id="modal-close">&times;</button>
@@ -193,6 +183,44 @@
     </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Firebase SDKs -->
+  <script type="module">
+    // We load the main app as a module so we can use Firebase modular SDK
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
+    import { 
+      getAuth, 
+      createUserWithEmailAndPassword, 
+      signInWithEmailAndPassword, 
+      signOut, 
+      onAuthStateChanged,
+      updateProfile
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js';
+    import { 
+      getFirestore, 
+      doc, 
+      getDoc, 
+      setDoc, 
+      updateDoc,
+      collection,
+      addDoc,
+      deleteDoc,
+      onSnapshot,
+      query,
+      orderBy
+    } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js';
+
+    import { firebaseConfig } from './firebase-config.js';
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // Make available to the rest of the app
+    window.firebaseApp = { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, doc, getDoc, setDoc, updateDoc, collection, addDoc, deleteDoc, onSnapshot, query, orderBy };
+
+    // Load the main application logic
+    import('./app.js');
+  </script>
 </body>
 </html>
