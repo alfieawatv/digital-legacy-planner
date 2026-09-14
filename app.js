@@ -1,9 +1,10 @@
-// Digital Legacy Planner - Fully functional with Firebase Auth + Firestore
-// Flow: Landing page → Auth (if needed) → App
+// Digital Legacy Planner - Complete & Fully Functional
+// Landing → Auth → App | Firebase Auth + Firestore
 
 const {
   auth, db,
   createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile,
+  sendPasswordResetEmail,
   doc, getDoc, setDoc, updateDoc, collection, addDoc, deleteDoc, onSnapshot, query, orderBy
 } = window.firebaseApp;
 
@@ -13,6 +14,11 @@ let unsubscribeAssets = null;
 let unsubscribeContacts = null;
 let unsubscribeWishes = null;
 let userProfile = { name: '', checkinIntervalDays: 30, lastCheckin: null };
+
+// In-memory caches so Edit forms can pre-fill correctly
+let assetsCache = [];
+let contactsCache = [];
+let wishesCache = [];
 
 // ---------- Helpers ----------
 function $(sel) { return document.querySelector(sel); }
@@ -62,9 +68,15 @@ function showAuth(mode = 'login') {
   show($('#auth-screen'));
   if (mode === 'signup') {
     hide($('#login-form'));
+    hide($('#reset-form'));
     show($('#signup-form'));
+  } else if (mode === 'reset') {
+    hide($('#login-form'));
+    hide($('#signup-form'));
+    show($('#reset-form'));
   } else {
     hide($('#signup-form'));
+    hide($('#reset-form'));
     show($('#login-form'));
   }
 }
@@ -76,7 +88,7 @@ function showApp() {
   showView('dashboard');
 }
 
-// ---------- Auth Actions ----------
+// ---------- Auth ----------
 async function handleSignup() {
   const name = $('#signup-name').value.trim();
   const email = $('#signup-email').value.trim();
@@ -96,12 +108,10 @@ async function handleSignup() {
   showLoading();
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, password);
-    if (name) {
-      await updateProfile(cred.user, { displayName: name });
-    }
+    if (name) await updateProfile(cred.user, { displayName: name });
     await setDoc(doc(db, 'users', cred.user.uid), {
       name: name || '',
-      email: email,
+      email,
       checkinIntervalDays: 30,
       lastCheckin: null,
       createdAt: new Date().toISOString()
@@ -134,12 +144,38 @@ async function handleLogin() {
   }
 }
 
+async function handlePasswordReset() {
+  const email = $('#reset-email').value.trim();
+  const errorEl = $('#reset-error');
+  const successEl = $('#reset-success');
+  errorEl.textContent = '';
+  successEl.textContent = '';
+
+  if (!email) {
+    errorEl.textContent = 'Please enter your email.';
+    return;
+  }
+
+  showLoading();
+  try {
+    await sendPasswordResetEmail(auth, email);
+    successEl.textContent = 'Password reset email sent. Check your inbox.';
+  } catch (err) {
+    errorEl.textContent = friendlyAuthError(err);
+  } finally {
+    hideLoading();
+  }
+}
+
 async function handleLogout() {
   showLoading();
   try {
     if (unsubscribeAssets) unsubscribeAssets();
     if (unsubscribeContacts) unsubscribeContacts();
     if (unsubscribeWishes) unsubscribeWishes();
+    assetsCache = [];
+    contactsCache = [];
+    wishesCache = [];
     await signOut(auth);
   } finally {
     hideLoading();
@@ -158,20 +194,25 @@ function friendlyAuthError(err) {
   return err.message || 'Something went wrong. Please try again.';
 }
 
-// ---------- Data Layer ----------
+// ---------- Data ----------
 async function loadUserProfile(uid) {
   const snap = await getDoc(doc(db, 'users', uid));
   if (snap.exists()) {
     userProfile = snap.data();
   } else {
-    userProfile = { name: currentUser.displayName || '', email: currentUser.email, checkinIntervalDays: 30, lastCheckin: null };
+    userProfile = {
+      name: currentUser.displayName || '',
+      email: currentUser.email,
+      checkinIntervalDays: 30,
+      lastCheckin: null
+    };
     await setDoc(doc(db, 'users', uid), userProfile);
   }
   updateProfileUI();
 }
 
 function updateProfileUI() {
-  const name = userProfile.name || currentUser.displayName || currentUser.email.split('@')[0];
+  const name = userProfile.name || currentUser.displayName || (currentUser.email || '').split('@')[0];
   $('#user-greeting').textContent = `Hi, ${name}`;
   $('#profile-name').value = userProfile.name || '';
   $('#checkin-interval').value = userProfile.checkinIntervalDays || 30;
@@ -194,36 +235,39 @@ function updateProfileUI() {
 }
 
 function startListeners(uid) {
+  // Assets
   const assetsRef = collection(db, 'users', uid, 'assets');
   unsubscribeAssets = onSnapshot(query(assetsRef, orderBy('createdAt', 'desc')), (snap) => {
-    const items = [];
-    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
-    renderAssets(items);
-    $('#stat-assets').textContent = items.length;
+    assetsCache = [];
+    snap.forEach(d => assetsCache.push({ id: d.id, ...d.data() }));
+    renderAssets(assetsCache);
+    $('#stat-assets').textContent = assetsCache.length;
   });
 
+  // Contacts
   const contactsRef = collection(db, 'users', uid, 'contacts');
   unsubscribeContacts = onSnapshot(query(contactsRef, orderBy('createdAt', 'desc')), (snap) => {
-    const items = [];
-    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
-    renderContacts(items);
-    $('#stat-contacts').textContent = items.length;
+    contactsCache = [];
+    snap.forEach(d => contactsCache.push({ id: d.id, ...d.data() }));
+    renderContacts(contactsCache);
+    $('#stat-contacts').textContent = contactsCache.length;
   });
 
+  // Wishes
   const wishesRef = collection(db, 'users', uid, 'wishes');
   unsubscribeWishes = onSnapshot(query(wishesRef, orderBy('createdAt', 'desc')), (snap) => {
-    const items = [];
-    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
-    renderWishes(items);
-    $('#stat-wishes').textContent = items.length;
+    wishesCache = [];
+    snap.forEach(d => wishesCache.push({ id: d.id, ...d.data() }));
+    renderWishes(wishesCache);
+    $('#stat-wishes').textContent = wishesCache.length;
   });
 }
 
-// ---------- Render Lists ----------
+// ---------- Render ----------
 function renderAssets(items) {
   const list = $('#assets-list');
   if (items.length === 0) {
-    list.innerHTML = '<div class="empty-state">No assets yet. Add accounts, subscriptions, photo libraries, or anything important.</div>';
+    list.innerHTML = '<div class="empty-state">No assets yet.<br>Add accounts, subscriptions, photo libraries, or anything important.</div>';
     return;
   }
   list.innerHTML = items.map(a => `
@@ -243,7 +287,7 @@ function renderAssets(items) {
 function renderContacts(items) {
   const list = $('#contacts-list');
   if (items.length === 0) {
-    list.innerHTML = '<div class="empty-state">No trusted contacts yet. Add people who should be notified if needed.</div>';
+    list.innerHTML = '<div class="empty-state">No trusted contacts yet.<br>Add people who should be notified if needed.</div>';
     return;
   }
   list.innerHTML = items.map(c => `
@@ -263,7 +307,7 @@ function renderContacts(items) {
 function renderWishes(items) {
   const list = $('#wishes-list');
   if (items.length === 0) {
-    list.innerHTML = '<div class="empty-state">No wishes written yet. Add plain-language instructions for what should happen.</div>';
+    list.innerHTML = '<div class="empty-state">No wishes written yet.<br>Add plain-language instructions for what should happen.</div>';
     return;
   }
   list.innerHTML = items.map(w => `
@@ -347,7 +391,7 @@ function showAssetForm(asset = null) {
         <textarea name="notes" placeholder="Any extra details or instructions">${asset ? escapeHtml(asset.notes || '') : ''}</textarea>
       </div>
       <div class="form-actions">
-        <button type="submit" class="btn primary">${isEdit ? 'Save' : 'Add asset'}</button>
+        <button type="submit" class="btn primary">${isEdit ? 'Save changes' : 'Add asset'}</button>
         <button type="button" class="btn" id="cancel-modal">Cancel</button>
       </div>
     </form>
@@ -397,7 +441,7 @@ function showContactForm(contact = null) {
         <input name="relation" value="${contact ? escapeHtml(contact.relation || '') : ''}" placeholder="e.g. Spouse, Sibling, Friend" />
       </div>
       <div class="form-actions">
-        <button type="submit" class="btn primary">${isEdit ? 'Save' : 'Add contact'}</button>
+        <button type="submit" class="btn primary">${isEdit ? 'Save changes' : 'Add contact'}</button>
         <button type="button" class="btn" id="cancel-modal">Cancel</button>
       </div>
     </form>
@@ -440,7 +484,7 @@ function showWishForm(wish = null) {
         <textarea name="body" required placeholder="Write clearly what you want to happen...">${wish ? escapeHtml(wish.body || '') : ''}</textarea>
       </div>
       <div class="form-actions">
-        <button type="submit" class="btn primary">${isEdit ? 'Save' : 'Add wish'}</button>
+        <button type="submit" class="btn primary">${isEdit ? 'Save changes' : 'Add wish'}</button>
         <button type="button" class="btn" id="cancel-modal">Cancel</button>
       </div>
     </form>
@@ -467,6 +511,30 @@ function showWishForm(wish = null) {
   $('#cancel-modal').onclick = closeModal;
 }
 
+// ---------- Export ----------
+function exportPlan() {
+  const plan = {
+    exportedAt: new Date().toISOString(),
+    profile: {
+      name: userProfile.name,
+      email: currentUser.email,
+      checkinIntervalDays: userProfile.checkinIntervalDays,
+      lastCheckin: userProfile.lastCheckin
+    },
+    assets: assetsCache,
+    contacts: contactsCache,
+    wishes: wishesCache
+  };
+
+  const blob = new Blob([JSON.stringify(plan, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `digital-legacy-plan-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
 // ---------- Auth State ----------
 onAuthStateChanged(auth, async (user) => {
   if (user) {
@@ -478,67 +546,77 @@ onAuthStateChanged(auth, async (user) => {
       showApp();
     } catch (err) {
       console.error(err);
-      alert('Failed to load your data. Please refresh.');
+      alert('Failed to load your data. Please refresh the page.');
     } finally {
       hideLoading();
     }
   } else {
     currentUser = null;
-    showLanding(); // Always start on the landing page when logged out
+    showLanding();
   }
 });
 
 // ---------- Event Bindings ----------
 document.addEventListener('DOMContentLoaded', () => {
-  // Landing page CTAs
+  // Landing CTAs
   const goToSignup = () => showAuth('signup');
   const goToLogin = () => showAuth('login');
 
-  $('#landing-start-btn').onclick = goToSignup;
-  $('#landing-start-btn-2').onclick = goToSignup;
-  $('#landing-start-btn-3').onclick = goToSignup;
-  $('#landing-login-btn').onclick = goToLogin;
-  $('#landing-login-link').onclick = (e) => { e.preventDefault(); goToLogin(); };
+  $('#landing-start-btn')?.addEventListener('click', goToSignup);
+  $('#landing-start-btn-2')?.addEventListener('click', goToSignup);
+  $('#landing-start-btn-3')?.addEventListener('click', goToSignup);
+  $('#landing-login-btn')?.addEventListener('click', goToLogin);
+  $('#landing-login-link')?.addEventListener('click', (e) => { e.preventDefault(); goToLogin(); });
 
-  // Back to landing from auth
-  $('#back-to-landing').onclick = (e) => { e.preventDefault(); showLanding(); };
-  $('#back-to-landing-2').onclick = (e) => { e.preventDefault(); showLanding(); };
+  // Back to landing
+  $('#back-to-landing')?.addEventListener('click', (e) => { e.preventDefault(); showLanding(); });
+  $('#back-to-landing-2')?.addEventListener('click', (e) => { e.preventDefault(); showLanding(); });
+  $('#back-to-landing-3')?.addEventListener('click', (e) => { e.preventDefault(); showLanding(); });
 
   // Auth form switching
-  $('#show-signup').onclick = (e) => {
+  $('#show-signup')?.addEventListener('click', (e) => {
     e.preventDefault();
-    hide($('#login-form'));
-    show($('#signup-form'));
+    showAuth('signup');
     $('#signup-error').textContent = '';
-  };
-  $('#show-login').onclick = (e) => {
+  });
+  $('#show-login')?.addEventListener('click', (e) => {
     e.preventDefault();
-    hide($('#signup-form'));
-    show($('#login-form'));
+    showAuth('login');
     $('#login-error').textContent = '';
-  };
+  });
+  $('#show-reset')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    showAuth('reset');
+    $('#reset-error').textContent = '';
+    $('#reset-success').textContent = '';
+  });
+  $('#show-login-from-reset')?.addEventListener('click', (e) => {
+    e.preventDefault();
+    showAuth('login');
+  });
 
-  $('#signup-btn').onclick = handleSignup;
-  $('#login-btn').onclick = handleLogin;
-  $('#logout-btn').onclick = handleLogout;
-  $('#logout-btn-2').onclick = handleLogout;
+  $('#signup-btn')?.addEventListener('click', handleSignup);
+  $('#login-btn')?.addEventListener('click', handleLogin);
+  $('#reset-btn')?.addEventListener('click', handlePasswordReset);
+  $('#logout-btn')?.addEventListener('click', handleLogout);
+  $('#logout-btn-2')?.addEventListener('click', handleLogout);
 
   // Navigation
   $$('.nav-btn').forEach(btn => {
-    btn.onclick = () => showView(btn.dataset.view);
+    btn.addEventListener('click', () => showView(btn.dataset.view));
   });
 
   $$('[data-goto]').forEach(btn => {
-    btn.onclick = () => showView(btn.dataset.goto);
+    btn.addEventListener('click', () => showView(btn.dataset.goto));
   });
 
   // Add buttons
-  $('#add-asset-btn').onclick = () => showAssetForm();
-  $('#add-contact-btn').onclick = () => showContactForm();
-  $('#add-wish-btn').onclick = () => showWishForm();
+  $('#add-asset-btn')?.addEventListener('click', () => showAssetForm());
+  $('#add-contact-btn')?.addEventListener('click', () => showContactForm());
+  $('#add-wish-btn')?.addEventListener('click', () => showWishForm());
 
   // Check-in
-  $('#do-checkin').onclick = async () => {
+  $('#do-checkin')?.addEventListener('click', async () => {
     showLoading();
     try {
       const now = new Date().toISOString();
@@ -550,10 +628,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       hideLoading();
     }
-  };
+  });
 
   // Settings
-  $('#save-settings').onclick = async () => {
+  $('#save-settings')?.addEventListener('click', async () => {
     const days = parseInt($('#checkin-interval').value, 10);
     showLoading();
     try {
@@ -566,9 +644,9 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       hideLoading();
     }
-  };
+  });
 
-  $('#save-profile').onclick = async () => {
+  $('#save-profile')?.addEventListener('click', async () => {
     const name = $('#profile-name').value.trim();
     showLoading();
     try {
@@ -582,13 +660,18 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       hideLoading();
     }
-  };
+  });
+
+  // Export
+  $('#export-btn')?.addEventListener('click', exportPlan);
 
   // Modal
-  $('#modal-close').onclick = closeModal;
-  $('#modal').onclick = (e) => { if (e.target === $('#modal')) closeModal(); };
+  $('#modal-close')?.addEventListener('click', closeModal);
+  $('#modal')?.addEventListener('click', (e) => {
+    if (e.target === $('#modal')) closeModal();
+  });
 
-  // Delegated actions
+  // Delegated Edit / Delete (now uses cache)
   document.body.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
@@ -602,7 +685,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     if (action === 'edit-asset') {
-      showAssetForm({ id, name: '', type: 'Account', notes: '' });
+      const asset = assetsCache.find(a => a.id === id);
+      if (asset) showAssetForm(asset);
     }
     if (action === 'delete-contact') {
       if (confirm('Remove this contact?')) {
@@ -611,7 +695,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     if (action === 'edit-contact') {
-      showContactForm({ id, name: '', email: '', phone: '', relation: '' });
+      const contact = contactsCache.find(c => c.id === id);
+      if (contact) showContactForm(contact);
     }
     if (action === 'delete-wish') {
       if (confirm('Delete this wish?')) {
@@ -620,7 +705,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     if (action === 'edit-wish') {
-      showWishForm({ id, title: '', body: '' });
+      const wish = wishesCache.find(w => w.id === id);
+      if (wish) showWishForm(wish);
     }
   });
 });
