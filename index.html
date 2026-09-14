@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Digital Legacy Planner — Simple continuity for your digital life</title>
+  <meta name="description" content="Organize what happens to your digital accounts, photos, messages, and online presence. Clear, calm, and free of legal jargon." />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Landing / Hero (shown when no profile) -->
+  <div id="landing" class="page">
+    <header class="topbar">
+      <div class="logo">Digital Legacy</div>
+      <button id="start-btn" class="btn primary">Get Started — Free</button>
+    </header>
+
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Your digital life deserves a plan.</h1>
+        <p class="lead">Accounts, photos, messages, subscriptions, and online presence — most people leave them unplanned. This tool helps you organize everything clearly and calmly, without legal jargon.</p>
+        <div class="hero-actions">
+          <button class="btn primary large" id="start-btn-2">Start your plan</button>
+          <a href="#how" class="btn ghost large">How it works</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="card preview-card">
+          <div class="preview-header">Your Digital Continuity</div>
+          <ul class="preview-list">
+            <li>✓ 12 accounts listed</li>
+            <li>✓ 2 trusted contacts</li>
+            <li>✓ Wishes written</li>
+            <li>✓ Next check-in: in 30 days</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="features">
+      <h2>Simple steps that actually get done</h2>
+      <div class="feature-grid">
+        <div class="feature">
+          <div class="feature-icon">1</div>
+          <h3>Inventory</h3>
+          <p>List the accounts, subscriptions, photo libraries, and important digital items that matter to you.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">2</div>
+          <h3>Trusted people</h3>
+          <p>Choose who should be notified and given clear instructions if something happens.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">3</div>
+          <h3>Your wishes</h3>
+          <p>Write plain-language instructions for what you want to happen to each part of your digital life.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">4</div>
+          <h3>Gentle check-ins</h3>
+          <p>Periodic quiet reminders so the system knows you're still active. You stay in control.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="trust">
+      <h2>Built for ordinary people</h2>
+      <p>No complex legal forms. No pressure. Just a clear place to put the things that matter so the people you love aren't left guessing.</p>
+      <p class="disclaimer">This is a prototype for demonstration purposes. It is not a substitute for professional legal or estate planning advice.</p>
+    </section>
+
+    <footer class="footer">
+      <p>Digital Legacy Planner — Prototype</p>
+    </footer>
+  </div>
+
+  <!-- App Shell -->
+  <div id="app" class="page hidden">
+    <header class="app-header">
+      <div class="logo">Digital Legacy</div>
+      <nav class="nav">
+        <button data-view="dashboard" class="nav-btn active">Dashboard</button>
+        <button data-view="assets" class="nav-btn">Assets</button>
+        <button data-view="contacts" class="nav-btn">Contacts</button>
+        <button data-view="wishes" class="nav-btn">Wishes</button>
+        <button data-view="settings" class="nav-btn">Settings</button>
+      </nav>
+      <button id="logout-btn" class="btn ghost small">Reset demo</button>
+    </header>
+
+    <main class="app-main">
+      <!-- Dashboard -->
+      <section id="view-dashboard" class="view">
+        <h1>Your continuity plan</h1>
+        <div class="stats">
+          <div class="stat-card">
+            <div class="stat-number" id="stat-assets">0</div>
+            <div class="stat-label">Digital assets</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="stat-contacts">0</div>
+            <div class="stat-label">Trusted contacts</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-number" id="stat-wishes">0</div>
+            <div class="stat-label">Wishes written</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Next check-in</h2>
+          <p id="checkin-status">You haven't set a check-in schedule yet.</p>
+          <button id="do-checkin" class="btn primary">I'm still here — check in now</button>
+        </div>
+
+        <div class="card">
+          <h2>Quick actions</h2>
+          <div class="quick-actions">
+            <button class="btn" data-goto="assets">+ Add an account or asset</button>
+            <button class="btn" data-goto="contacts">+ Add trusted contact</button>
+            <button class="btn" data-goto="wishes">Write a wish</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Assets -->
+      <section id="view-assets" class="view hidden">
+        <div class="view-header">
+          <h1>Digital assets</h1>
+          <button id="add-asset-btn" class="btn primary">+ Add asset</button>
+        </div>
+        <p class="hint">List accounts, subscriptions, photo libraries, cloud storage, social profiles, crypto wallets, or anything else important.</p>
+        <div id="assets-list" class="list"></div>
+      </section>
+
+      <!-- Contacts -->
+      <section id="view-contacts" class="view hidden">
+        <div class="view-header">
+          <h1>Trusted contacts</h1>
+          <button id="add-contact-btn" class="btn primary">+ Add contact</button>
+        </div>
+        <p class="hint">These people can be notified and given access to your instructions if the check-in system detects prolonged inactivity.</p>
+        <div id="contacts-list" class="list"></div>
+      </section>
+
+      <!-- Wishes -->
+      <section id="view-wishes" class="view hidden">
+        <div class="view-header">
+          <h1>Your wishes</h1>
+          <button id="add-wish-btn" class="btn primary">+ Add wish</button>
+        </div>
+        <p class="hint">Write plain instructions. Examples: "Delete my social media after 6 months", "Give photo library access to my sister", "Close all subscriptions".</p>
+        <div id="wishes-list" class="list"></div>
+      </section>
+
+      <!-- Settings -->
+      <section id="view-settings" class="view hidden">
+        <h1>Settings</h1>
+        <div class="card">
+          <h2>Check-in schedule</h2>
+          <p>How often should we gently ask if you're still active?</p>
+          <select id="checkin-interval">
+            <option value="30">Every 30 days</option>
+            <option value="60">Every 60 days</option>
+            <option value="90">Every 90 days</option>
+            <option value="180">Every 6 months</option>
+          </select>
+          <button id="save-settings" class="btn primary" style="margin-top:1rem">Save settings</button>
+        </div>
+        <div class="card">
+          <h2>Your profile</h2>
+          <label>Display name</label>
+          <input type="text" id="profile-name" placeholder="How should we address you?" />
+          <button id="save-profile" class="btn" style="margin-top:0.75rem">Update name</button>
+        </div>
+        <div class="card danger-zone">
+          <h2>Reset demo data</h2>
+          <p>This clears everything stored in this browser.</p>
+          <button id="reset-all" class="btn danger">Clear all data</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div id="modal" class="modal hidden">
+    <div class="modal-content">
+      <button class="modal-close" id="modal-close">&times;</button>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
