@@ -3,16 +3,101 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Digital Legacy Planner — Your digital continuity plan</title>
-  <meta name="description" content="Organize what happens to your digital accounts, photos, messages, and online presence. Secure accounts required." />
+  <title>Digital Legacy Planner — Plan what happens to your digital life</title>
+  <meta name="description" content="A simple, calm tool that helps ordinary people organize what happens to their digital accounts, photos, messages, and online presence." />
   <link rel="stylesheet" href="styles.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+
+  <!-- ==================== LANDING PAGE ==================== -->
+  <div id="landing" class="page">
+    <header class="topbar">
+      <div class="logo">Digital Legacy</div>
+      <div class="topbar-actions">
+        <button id="landing-login-btn" class="btn ghost">Log in</button>
+        <button id="landing-start-btn" class="btn primary">Get Started</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-content">
+        <h1>Your digital life deserves a plan.</h1>
+        <p class="lead">
+          Most people have dozens of accounts, years of photos, messages, subscriptions, and an online presence — yet almost no one has a clear plan for what should happen if they die or become incapacitated.
+        </p>
+        <p class="lead">
+          Digital Legacy Planner makes it simple, calm, and free of legal jargon.
+        </p>
+        <div class="hero-actions">
+          <button class="btn primary large" id="landing-start-btn-2">Start your plan — Free</button>
+          <a href="#how" class="btn ghost large">See how it works</a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="card preview-card">
+          <div class="preview-header">Your Digital Continuity</div>
+          <ul class="preview-list">
+            <li>✓ Accounts & subscriptions listed</li>
+            <li>✓ Trusted contacts chosen</li>
+            <li>✓ Clear wishes written</li>
+            <li>✓ Gentle check-ins scheduled</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="features">
+      <h2>What this tool actually does</h2>
+      <div class="feature-grid">
+        <div class="feature">
+          <div class="feature-icon">1</div>
+          <h3>Inventory your digital life</h3>
+          <p>List the accounts, photo libraries, subscriptions, social profiles, cloud storage, and anything else that matters to you.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">2</div>
+          <h3>Choose trusted people</h3>
+          <p>Designate who should be notified and given access to your instructions if something happens.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">3</div>
+          <h3>Write your wishes</h3>
+          <p>Leave plain-language instructions — no legal forms required. Just clear guidance for the people you trust.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-icon">4</div>
+          <h3>Gentle check-ins</h3>
+          <p>Periodic quiet reminders so the system knows you're still active. You stay fully in control.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="why-section">
+      <div class="why-content">
+        <h2>Why this exists</h2>
+        <p>Digital assets are real assets. Photos of loved ones, years of conversations, creative work, financial accounts, and online identities all need a plan — just like physical belongings.</p>
+        <p>Most people put this off because existing solutions feel complicated, legal, or overwhelming. This tool is designed to feel human and achievable.</p>
+      </div>
+    </section>
+
+    <section class="cta-section">
+      <h2>Ready when you are</h2>
+      <p>Creating an account takes less than a minute. Your data stays private under your account.</p>
+      <button class="btn primary large" id="landing-start-btn-3">Create your free account</button>
+      <p class="cta-login">Already have an account? <a href="#" id="landing-login-link">Log in</a></p>
+    </section>
+
+    <footer class="footer">
+      <p>Digital Legacy Planner</p>
+      <p class="disclaimer">This is a working tool, not legal advice. It does not replace professional estate planning or legal counsel.</p>
+    </footer>
+  </div>
+
   <!-- ==================== AUTH SCREENS ==================== -->
-  <div id="auth-screen" class="page">
+  <div id="auth-screen" class="page hidden">
     <div class="auth-container">
       <div class="auth-card">
         <div class="logo-large">Digital Legacy</div>
@@ -31,6 +116,7 @@
           </div>
           <button id="login-btn" class="btn primary full">Log in</button>
           <p class="auth-switch">Don't have an account? <a href="#" id="show-signup">Sign up</a></p>
+          <p class="auth-switch"><a href="#" id="back-to-landing">← Back to home</a></p>
           <p id="login-error" class="error-msg"></p>
         </div>
 
@@ -51,6 +137,7 @@
           </div>
           <button id="signup-btn" class="btn primary full">Create account</button>
           <p class="auth-switch">Already have an account? <a href="#" id="show-login">Log in</a></p>
+          <p class="auth-switch"><a href="#" id="back-to-landing-2">← Back to home</a></p>
           <p id="signup-error" class="error-msg"></p>
         </div>
       </div>
@@ -185,7 +272,6 @@
 
   <!-- Firebase SDKs -->
   <script type="module">
-    // We load the main app as a module so we can use Firebase modular SDK
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js';
     import { 
       getAuth, 
@@ -211,15 +297,12 @@
 
     import { firebaseConfig } from './firebase-config.js';
 
-    // Initialize Firebase
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // Make available to the rest of the app
     window.firebaseApp = { auth, db, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile, doc, getDoc, setDoc, updateDoc, collection, addDoc, deleteDoc, onSnapshot, query, orderBy };
 
-    // Load the main application logic
     import('./app.js');
   </script>
 </body>

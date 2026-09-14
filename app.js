@@ -1,4 +1,5 @@
 // Digital Legacy Planner - Fully functional with Firebase Auth + Firestore
+// Flow: Landing page → Auth (if needed) → App
 
 const {
   auth, db,
@@ -48,16 +49,28 @@ function showView(name) {
   if (btn) btn.classList.add('active');
 }
 
-// ---------- Auth UI ----------
-function showAuth() {
+// ---------- Screen Management ----------
+function showLanding() {
+  hide($('#auth-screen'));
+  hide($('#app'));
+  show($('#landing'));
+}
+
+function showAuth(mode = 'login') {
+  hide($('#landing'));
   hide($('#app'));
   show($('#auth-screen'));
-  hide($('#login-form'));
-  hide($('#signup-form'));
-  show($('#login-form'));
+  if (mode === 'signup') {
+    hide($('#login-form'));
+    show($('#signup-form'));
+  } else {
+    hide($('#signup-form'));
+    show($('#login-form'));
+  }
 }
 
 function showApp() {
+  hide($('#landing'));
   hide($('#auth-screen'));
   show($('#app'));
   showView('dashboard');
@@ -86,7 +99,6 @@ async function handleSignup() {
     if (name) {
       await updateProfile(cred.user, { displayName: name });
     }
-    // Create user profile document
     await setDoc(doc(db, 'users', cred.user.uid), {
       name: name || '',
       email: email,
@@ -125,7 +137,6 @@ async function handleLogin() {
 async function handleLogout() {
   showLoading();
   try {
-    // Stop listeners
     if (unsubscribeAssets) unsubscribeAssets();
     if (unsubscribeContacts) unsubscribeContacts();
     if (unsubscribeWishes) unsubscribeWishes();
@@ -153,7 +164,6 @@ async function loadUserProfile(uid) {
   if (snap.exists()) {
     userProfile = snap.data();
   } else {
-    // Fallback create
     userProfile = { name: currentUser.displayName || '', email: currentUser.email, checkinIntervalDays: 30, lastCheckin: null };
     await setDoc(doc(db, 'users', uid), userProfile);
   }
@@ -167,7 +177,6 @@ function updateProfileUI() {
   $('#checkin-interval').value = userProfile.checkinIntervalDays || 30;
   $('#account-email').textContent = currentUser.email;
 
-  // Check-in status
   const statusEl = $('#checkin-status');
   if (userProfile.lastCheckin) {
     const last = new Date(userProfile.lastCheckin);
@@ -185,29 +194,26 @@ function updateProfileUI() {
 }
 
 function startListeners(uid) {
-  // Assets
   const assetsRef = collection(db, 'users', uid, 'assets');
   unsubscribeAssets = onSnapshot(query(assetsRef, orderBy('createdAt', 'desc')), (snap) => {
     const items = [];
-    snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
     renderAssets(items);
     $('#stat-assets').textContent = items.length;
   });
 
-  // Contacts
   const contactsRef = collection(db, 'users', uid, 'contacts');
   unsubscribeContacts = onSnapshot(query(contactsRef, orderBy('createdAt', 'desc')), (snap) => {
     const items = [];
-    snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
     renderContacts(items);
     $('#stat-contacts').textContent = items.length;
   });
 
-  // Wishes
   const wishesRef = collection(db, 'users', uid, 'wishes');
   unsubscribeWishes = onSnapshot(query(wishesRef, orderBy('createdAt', 'desc')), (snap) => {
     const items = [];
-    snap.forEach(doc => items.push({ id: doc.id, ...doc.data() }));
+    snap.forEach(d => items.push({ id: d.id, ...d.data() }));
     renderWishes(items);
     $('#stat-wishes').textContent = items.length;
   });
@@ -281,11 +287,9 @@ async function addAsset(data) {
     createdAt: new Date().toISOString()
   });
 }
-
 async function updateAsset(id, data) {
   await updateDoc(doc(db, 'users', currentUser.uid, 'assets', id), data);
 }
-
 async function deleteAsset(id) {
   await deleteDoc(doc(db, 'users', currentUser.uid, 'assets', id));
 }
@@ -296,11 +300,9 @@ async function addContact(data) {
     createdAt: new Date().toISOString()
   });
 }
-
 async function updateContact(id, data) {
   await updateDoc(doc(db, 'users', currentUser.uid, 'contacts', id), data);
 }
-
 async function deleteContact(id) {
   await deleteDoc(doc(db, 'users', currentUser.uid, 'contacts', id));
 }
@@ -311,11 +313,9 @@ async function addWish(data) {
     createdAt: new Date().toISOString()
   });
 }
-
 async function updateWish(id, data) {
   await updateDoc(doc(db, 'users', currentUser.uid, 'wishes', id), data);
 }
-
 async function deleteWish(id) {
   await deleteDoc(doc(db, 'users', currentUser.uid, 'wishes', id));
 }
@@ -467,7 +467,7 @@ function showWishForm(wish = null) {
   $('#cancel-modal').onclick = closeModal;
 }
 
-// ---------- Auth State Listener ----------
+// ---------- Auth State ----------
 onAuthStateChanged(auth, async (user) => {
   if (user) {
     currentUser = user;
@@ -484,12 +484,26 @@ onAuthStateChanged(auth, async (user) => {
     }
   } else {
     currentUser = null;
-    showAuth();
+    showLanding(); // Always start on the landing page when logged out
   }
 });
 
 // ---------- Event Bindings ----------
 document.addEventListener('DOMContentLoaded', () => {
+  // Landing page CTAs
+  const goToSignup = () => showAuth('signup');
+  const goToLogin = () => showAuth('login');
+
+  $('#landing-start-btn').onclick = goToSignup;
+  $('#landing-start-btn-2').onclick = goToSignup;
+  $('#landing-start-btn-3').onclick = goToSignup;
+  $('#landing-login-btn').onclick = goToLogin;
+  $('#landing-login-link').onclick = (e) => { e.preventDefault(); goToLogin(); };
+
+  // Back to landing from auth
+  $('#back-to-landing').onclick = (e) => { e.preventDefault(); showLanding(); };
+  $('#back-to-landing-2').onclick = (e) => { e.preventDefault(); showLanding(); };
+
   // Auth form switching
   $('#show-signup').onclick = (e) => {
     e.preventDefault();
@@ -574,7 +588,7 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#modal-close').onclick = closeModal;
   $('#modal').onclick = (e) => { if (e.target === $('#modal')) closeModal(); };
 
-  // Delegated delete / edit
+  // Delegated actions
   document.body.addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-action]');
     if (!btn) return;
@@ -588,18 +602,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     if (action === 'edit-asset') {
-      // We need the current data - for simplicity we re-fetch or store temporarily.
-      // Because we use real-time listeners, the simplest is to ask the user to re-enter or
-      // we can store a temporary map. For MVP we open empty edit and let them overwrite.
-      // Better: keep a simple in-memory cache.
-      const items = Array.from($('#assets-list').querySelectorAll('.list-item'));
-      // For clean MVP we just open the form with minimal data from the DOM or skip deep edit.
-      // Let's do a proper way: store last snapshot.
-      showAssetForm({ id, name: '', type: 'Account', notes: '' }); // simplified - user can re-type
-      // Note: for production you'd keep a local cache of the items.
+      showAssetForm({ id, name: '', type: 'Account', notes: '' });
     }
-
-    // Similar simplified handling for contacts and wishes
     if (action === 'delete-contact') {
       if (confirm('Remove this contact?')) {
         showLoading();
